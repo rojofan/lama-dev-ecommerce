@@ -1,65 +1,84 @@
 import "./Product.scss";
 import {useState} from "react";
-import {AddShoppingCart, Balance, FavoriteBorder, FavoriteBorderOutlined} from "@mui/icons-material";
-import {Link} from "react-router-dom";
+import {AddShoppingCart, Balance, FavoriteBorder} from "@mui/icons-material";
+import {useParams} from "react-router-dom";
+import useFetch from "../../hooks/useFetch";
+import {useDispatch} from "react-redux";
+import {addToCart} from "../../redux/cartReducer";
 
 const Product = () => {
 
-    const [selectedImage, setSelectedImage] = useState(0);
+    const id = useParams().id
+    const uploadUrl = process.env.REACT_APP_API_UPLOAD_URL;
+    const [selectedImage, setSelectedImage] = useState("img");
     const [quantity, setQuantity] = useState(1);
+    const dispatch = useDispatch()
 
-
-
-    const images = [
-        "https://images.pexels.com/photos/1972115/pexels-photo-1972115.jpeg?auto=compress&cs=tinysrgb&w=1600",
-        "https://images.pexels.com/photos/1163194/pexels-photo-1163194.jpeg?auto=compress&cs=tinysrgb&w=1600"
-    ]
+    const {data, loading, error} = useFetch(`/products/${id}?populate=*`)
 
     return (
         <div className="product">
-            <div className="left">
-                <div className="images">
-                    <img src={images[0]} alt=""  onClick={e => setSelectedImage(0)}/>
-                    <img src={images[1]} alt="" onClick={e => setSelectedImage(1)}/>
-                </div>
-                <div className="mainImg">
-                    <img src={images[selectedImage]} alt=""/>
-                </div>
-            </div>
-            <div className="right">
-                <h1>Title</h1>
-                <span className="price">$200</span>
-                <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Consectetur deleniti dolores eos iusto maiores nam non porro saepe vel voluptate. Aliquid, cum, minus? Dicta eum nihil numquam optio quod unde!</p>
-                <div className="quantity">
-                    <button onClick={() => setQuantity(prevState => prevState === 1 ? 1 :  prevState - 1)}>-</button>
-                    <span>{quantity}</span>
-                    <button onClick={() => setQuantity(prevState => prevState + 1)}>+</button>
-                </div>
-                <button className="add">
-                    <AddShoppingCart/> ADD TO CART
-                </button>
-                <div className="links">
-                    <div className="item">
-                        <FavoriteBorder/> ADD TO WISH LIST
+            {loading ? ("Loading"
+            ) : (
+                <>
+                    <div className="left">
+                        <div className="images">
+                            <img src={uploadUrl + data?.attributes?.img?.data?.attributes?.url} alt=""
+                                 onClick={e => setSelectedImage("img")}/>
+                            <img src={uploadUrl + data?.attributes?.img2?.data?.attributes?.url} alt=""
+                                 onClick={e => setSelectedImage("img2")}/>
+                        </div>
+                        <div className="mainImg">
+                            <img src={data.attributes? uploadUrl + data?.attributes[selectedImage]?.data?.attributes?.url : "loading"} alt=""/>
+                        </div>
                     </div>
-                    <div className="item">
-                        <Balance/> ADD TO COMPARE
+                    <div className="right">
+                        <h1>{data?.attributes?.title}</h1>
+                        <span className="price">{data?.attributes?.price}</span>
+                        <p>{data?.attributes?.desc}</p>
+                        <div className="quantity">
+                            <button
+                                onClick={() => setQuantity(prevState => prevState === 1 ? 1 : prevState - 1)}>-
+                            </button>
+                            <span>{quantity}</span>
+                            <button onClick={() => setQuantity(prevState => prevState + 1)}>+</button>
+                        </div>
+                        <button className="add" onClick={() => dispatch(addToCart({
+                            id: data.id,
+                            title: data.attributes.title,
+                            desc: data.attributes.desc,
+                            price: data.attributes.price,
+                            img: uploadUrl + data?.attributes?.img?.data?.attributes?.url,
+                            quantity
+                        }))}>
+                            <AddShoppingCart/> ADD TO CART
+                        </button>
+                        <div className="links">
+                            <div className="item">
+                                <FavoriteBorder/> ADD TO WISH LIST
+                            </div>
+                            <div className="item">
+                                <Balance/> ADD TO COMPARE
+                            </div>
+                        </div>
+                        <div className="info">
+                            <span>Vendor: Polo</span>
+                            <span>Product Type: T-Shirt</span>
+                            <span>Tag: T-Shirt, Women, Top</span>
+                        </div>
+                        <hr/>
+                        <div className="info">
+                            <span>DESCRIPTION</span>
+                            <hr/>
+                            <span>ADDITIONAL INFORMATION</span>
+                            <hr/>
+                            <span>FAQ</span>
+                        </div>
                     </div>
-                </div>
-                <div className="info">
-                    <span>Vendor: Polo</span>
-                    <span>Product Typw: T-Shirt</span>
-                    <span>Tag: T-Shirt, Women, Top</span>
-                </div>
-                <hr/>
-                <div className="info">
-                    <span>DESCRIPTION</span>
-                    <hr/>
-                    <span>ADDITIONAL INFORMATION</span>
-                    <hr/>
-                    <span>FAQ</span>
-                </div>
-            </div>
+
+                </>)
+
+            }
         </div>
     )
 }
